@@ -1,5 +1,22 @@
+import { DATA_DIR, DOWNLOAD_DIR, PACKAGE_DIR } from './constants';
 import { TileFetcher } from './fetcher/tile-fetcher';
 import { DepthFetchArgs } from './fetcher/tile-fetcher-args.interface';
+import fs from 'fs';
+
+const createDirectory = (path: string) => {
+    if (fs.existsSync(path)) {
+        return;
+    }
+    fs.mkdirSync(path);
+}
+
+const createDirectories = () => {
+    createDirectory(DATA_DIR);
+    createDirectory(DOWNLOAD_DIR);
+    createDirectory(PACKAGE_DIR);
+}
+
+createDirectories();
 
 const fullDepthArgs: DepthFetchArgs = {
     x: 0,
