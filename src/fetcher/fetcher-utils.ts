@@ -1,14 +1,5 @@
 import { Tile } from './Tile';
 
-export const generateUrlFromTemplate = (templateUrl: string, x: number, y: number, z: number) => {
-    const url = `${templateUrl}`
-        .replace('{x}', x.toString())
-        .replace('{y}', y.toString())
-        .replace('{-y}', (-y).toString())
-        .replace('{z}', z.toString());
-    return url;
-};
-
 export const zoom = (tile: Tile): Tile[] => {
     const x0 = 2 * tile.x;
     const y0 = 2 * tile.y;

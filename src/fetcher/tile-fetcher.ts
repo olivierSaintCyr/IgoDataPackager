@@ -1,5 +1,5 @@
 import { DepthFetchArgs } from './tile-fetcher-args.interface';
-import { generateUrlFromTemplate, getAllChildTiles } from './fetcher-utils';
+import { getAllChildTiles } from './fetcher-utils';
 import { Tile } from './Tile';
 import { finished } from 'stream/promises';
 import axios from 'axios';
@@ -7,9 +7,22 @@ import { DOWNLOAD_DIR } from '../constants';
 import { createWriteStream } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { DownloadedFile } from './downloaded-file.interface';
+import { createFromTemplate } from 'ol/tileurlfunction.js';
+import { UrlFunction } from 'ol/Tile';
 
 export class TileFetcher {
-    constructor(private args: DepthFetchArgs) {}
+    private urlGenerator: UrlFunction;
+    constructor(private args: DepthFetchArgs) {
+        const { url, source } = args;
+        if (!source.tileGrid) {
+            throw Error('Invalid data source no tileGrid provided');
+        }
+
+        if (!source.getProjection()) {
+            throw Error('Invalid data source no projection provided');
+        }
+        this.urlGenerator = createFromTemplate(url, source.tileGrid);
+    }
 
     private getUrls(): string[] {
         const root: Tile = {
@@ -24,12 +37,16 @@ export class TileFetcher {
         );
 
         return tiles.map((tile) => {
-            return generateUrlFromTemplate(
-                this.args.url,
-                tile.x,
-                tile.y,
-                tile.z,
+            const url = this.urlGenerator(
+                [tile.z, tile.x, tile.y],
+                0,
+                this.args.source.getProjection()!!,
             );
+
+            if (!url) {
+                throw Error("Can't generate URL.");
+            }
+            return url;
         });
     }
 
