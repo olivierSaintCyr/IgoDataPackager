@@ -16,6 +16,11 @@ const createDirectories = () => {
     createDirectory(PACKAGE_DIR);
 }
 
+const fetchData = async (fetcher: TileFetcher) => {
+    const downloadedFiles = await fetcher.fetch();
+    console.log(downloadedFiles)
+}
+
 createDirectories();
 
 const fullDepthArgs: DepthFetchArgs = {
@@ -27,4 +32,4 @@ const fullDepthArgs: DepthFetchArgs = {
 };
 
 const fetcher = new TileFetcher(fullDepthArgs);
-fetcher.fetch();
+fetchData(fetcher);
