@@ -70,6 +70,27 @@ const createFullDepthGenerationArgs = (url: string, source: TileSource, generati
 
 createDirectories();
 
+const main = async () => {
+    const sourceFactory = new DataSourceFactory();
+    const tileSourceOptions: TileSourceOptions = createTileSourceOptions(packageGenerationOptions);
+    
+    const source = await sourceFactory.create(tileSourceOptions);
+    
+    const { url, generation: { args } } = packageGenerationOptions;
+    const fullDepthArgs = createFullDepthGenerationArgs(
+        url,
+        source,
+        args,
+    );
+    
+    const fetcher = new TileFetcher(fullDepthArgs);
+    const packager = new ZipPackager();
+    
+    const { title } = packageGenerationOptions;
+    await packageData(title, fetcher, packager);
+    
+}
+
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
     type: 'xyz',
@@ -86,19 +107,4 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
     }
 };
 
-const sourceFactory = new DataSourceFactory();
-const tileSourceOptions: TileSourceOptions = createTileSourceOptions(packageGenerationOptions);
-const source = sourceFactory.create(tileSourceOptions);
-
-const { url, generation: { args } } = packageGenerationOptions;
-const fullDepthArgs = createFullDepthGenerationArgs(
-    url,
-    source,
-    args,
-);
-
-const fetcher = new TileFetcher(fullDepthArgs);
-const packager = new ZipPackager();
-
-const { title } = packageGenerationOptions;
-packageData(title, fetcher, packager);
+main();

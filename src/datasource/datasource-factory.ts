@@ -1,6 +1,6 @@
 import { TileSourceOptions } from './datasource-options.interface';
 import TileSource from 'ol/source/Tile';
-import olSourceXYZ from 'ol/source/XYZ';
+import olSourceXYZ from 'ol/source/XYZ.js';
 
 export class DataSourceFactory {
     create(options: TileSourceOptions): TileSource {
@@ -8,7 +8,6 @@ export class DataSourceFactory {
         switch (type) {
             case 'xyz':
                 return new olSourceXYZ(options);
-        
             default:
                 throw Error('Source type not supported.');
         }

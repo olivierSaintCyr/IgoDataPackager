@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "ESNext",
         "esModuleInterop": true,
-        "target": "es6",
+        "target": "ES2022",
         "moduleResolution": "node",
         "sourceMap": true,
         "strict": true,
         "outDir": "dist",
         "rootDir": "./src/"
       },
-    "lib": ["es2015"]
+    "ts-node": {
+      "esm": true, // «———— enabling ESM for ts-node
+    },
   }
