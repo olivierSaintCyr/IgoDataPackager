@@ -40,10 +40,8 @@ const deleteData = (downloadedFiles: DownloadedFile[]) => {
 const packageData = async (packageName: string, fetcher: TileFetcher, packager: ZipPackager) => {
     const downloadedFiles = await fetcher.fetch();
     
-    console.log('Downloaded Files', downloadedFiles);
-
+    console.log('Downloaded Files', downloadedFiles, downloadedFiles.length);
     const metadata = createPackageMetadata(downloadedFiles, packageName);
-
     const packagePath = `${PACKAGE_DIR}/${packageName}.zip`;
     await packager.package(metadata, packagePath);
 
@@ -75,24 +73,23 @@ const loadGeoJson = (path: string): FeatureCollection => {
     return JSON.parse(data.toString());
 };
 
-const main = async () => {
+const main = async (options: MapTilePackageGenerationOptions) => {
     const sourceFactory = new DataSourceFactory();
-    const tileSourceOptions: TileSourceOptions = createTileSourceOptions(packageGenerationOptions);
-    
+    const tileSourceOptions: TileSourceOptions = createTileSourceOptions(options);
     const source = await sourceFactory.create(tileSourceOptions);
     
-    const { url, generation: { args } } = packageGenerationOptions;
+    const { url, generation: { args } } = options;
     const fullDepthArgs = createFullDepthGenerationArgs(
         url,
         source,
         args,
-        );
+    );
         
-        const fetcher = new TileFetcher(fullDepthArgs);
-        const packager = new ZipPackager();
-        
-        const { title } = packageGenerationOptions;
-        await packageData(title, fetcher, packager);    
+    const fetcher = new TileFetcher(fullDepthArgs);
+    const packager = new ZipPackager();
+    
+    const { title } = options;
+    await packageData(title, fetcher, packager);    
 }
 
 createDirectories();
@@ -116,6 +113,4 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
 const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude.geojson`);
 const firstGeometry = serviceCenters.features[0].geometry;
 
-// console.log(firstGeometry);
-
-main();
+main(packageGenerationOptions);

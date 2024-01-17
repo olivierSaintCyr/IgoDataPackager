@@ -1,8 +1,9 @@
 import { Tile } from './Tile';
+import TileGrid from 'ol/tilegrid/TileGrid';
 
 export const zoom = (tile: Tile): Tile[] => {
-    const x0 = 2 * tile.x;
-    const y0 = 2 * tile.y;
+    const x0 = 2 * (tile.x - 1) + 1;
+    const y0 = 2 * (tile.y - 1) + 1;
     const z = tile.z + 1;
     const tiles: Tile[] = [];
     for (let i = 0; i < 2; i++) {
@@ -25,10 +26,19 @@ export function deZoom(tile: Tile): Tile | undefined {
     return { x, y, z };
 }
 
-export const getAllChildTiles = (root: Tile, maxLevel: number): Tile[] => {
+export const isTileInsideTileGrid = (tile: Tile, tileGrid: TileGrid): boolean => {
+    const extent = tileGrid.getTileCoordExtent([ tile.z, tile.x, tile.y]);
+    return !extent.includes(NaN);
+}
+
+export const getAllChildTiles = (root: Tile, maxLevel: number, tileGrid: TileGrid): Tile[] => {
     const tiles: Tile[] = []
 
     const recursion = (current: Tile) => {
+        if (!isTileInsideTileGrid(current, tileGrid)) {
+            return;
+        }
+
         if (current.z === maxLevel) {
             tiles.push(current);
             return;
