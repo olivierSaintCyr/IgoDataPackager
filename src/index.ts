@@ -9,6 +9,7 @@ import { MapTilePackageGenerationOptions } from './map-tile-package-generation-o
 import { DataSourceFactory } from './datasource/datasource-factory';
 import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
+import { FeatureCollection } from 'geojson';
 
 const createDirectory = (path: string) => {
     if (fs.existsSync(path)) {
@@ -68,7 +69,11 @@ const createFullDepthGenerationArgs = (url: string, source: TileSource, generati
     }
 }
 
-createDirectories();
+const loadGeoJson = (path: string): FeatureCollection => {
+    console.log(`Loading ${path}`);
+    const data = fs.readFileSync(path);
+    return JSON.parse(data.toString());
+};
 
 const main = async () => {
     const sourceFactory = new DataSourceFactory();
@@ -81,15 +86,16 @@ const main = async () => {
         url,
         source,
         args,
-    );
-    
-    const fetcher = new TileFetcher(fullDepthArgs);
-    const packager = new ZipPackager();
-    
-    const { title } = packageGenerationOptions;
-    await packageData(title, fetcher, packager);
-    
+        );
+        
+        const fetcher = new TileFetcher(fullDepthArgs);
+        const packager = new ZipPackager();
+        
+        const { title } = packageGenerationOptions;
+        await packageData(title, fetcher, packager);    
 }
+
+createDirectories();
 
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
@@ -102,9 +108,14 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
             x: 0,
             y: 0,
             startZ: 1,
-            endZ: 4,
+            endZ: 8,
         }
     }
 };
+
+const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude.geojson`);
+const firstGeometry = serviceCenters.features[0].geometry;
+
+// console.log(firstGeometry);
 
 main();
