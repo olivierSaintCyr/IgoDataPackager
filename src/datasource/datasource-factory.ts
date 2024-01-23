@@ -3,7 +3,7 @@ import TileSource from 'ol/source/Tile';
 import olSourceXYZ from 'ol/source/XYZ.js';
 
 export class DataSourceFactory {
-    create(options: TileSourceOptions): TileSource {
+    static create(options: TileSourceOptions): TileSource {
         const { type } = options;
         switch (type) {
             case 'xyz':

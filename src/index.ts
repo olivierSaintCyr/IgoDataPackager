@@ -75,10 +75,9 @@ const loadGeoJson = (path: string): FeatureCollection => {
 };
 
 const main = async (options: MapTilePackageGenerationOptions) => {
-    const sourceFactory = new DataSourceFactory();
     const tileSourceOptions: TileSourceOptions = createTileSourceOptions(options);
-    
-    const source = await sourceFactory.create(tileSourceOptions);
+
+    const source = await DataSourceFactory.create(tileSourceOptions);
 
     const { url,  args } = options;
     const fetchArgs = createFullDepthGenerationArgs(
