@@ -1,6 +1,6 @@
 import { DATA_DIR, DOWNLOAD_DIR, PACKAGE_DIR } from './constants';
 import { TileFetcher } from './fetcher/tile-fetcher';
-import { DepthFetchArgs, GenerationArgs } from './fetcher/tile-fetcher-args.interface';
+import { FetchArgs, GenerationArgs } from './fetcher/tile-fetcher-args.interface';
 import fs from 'fs';
 import { ZipPackager } from './packager';
 import { DownloadedFile } from './fetcher/downloaded-file.interface';
@@ -9,7 +9,8 @@ import { MapTilePackageGenerationOptions } from './map-tile-package-generation-o
 import { DataSourceFactory } from './datasource/datasource-factory';
 import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
-import { FeatureCollection } from 'geojson';
+import { FeatureCollection, Polygon } from 'geojson';
+import { TileFetcherFactory } from './fetcher/tile-fetcher-factory';
 
 const createDirectory = (path: string) => {
     if (fs.existsSync(path)) {
@@ -59,11 +60,11 @@ const createTileSourceOptions = (packageGenerationOptions: MapTilePackageGenerat
     }
 };
 
-const createFullDepthGenerationArgs = (url: string, source: TileSource, generationArgs: GenerationArgs): DepthFetchArgs => {
+const createFullDepthGenerationArgs = (url: string, source: TileSource, generationArgs: GenerationArgs): FetchArgs => {
     return {
         url,
         source,
-        ...generationArgs,
+        args: generationArgs,
     }
 }
 
@@ -76,16 +77,19 @@ const loadGeoJson = (path: string): FeatureCollection => {
 const main = async (options: MapTilePackageGenerationOptions) => {
     const sourceFactory = new DataSourceFactory();
     const tileSourceOptions: TileSourceOptions = createTileSourceOptions(options);
-    const source = await sourceFactory.create(tileSourceOptions);
     
-    const { url, generation: { args } } = options;
-    const fullDepthArgs = createFullDepthGenerationArgs(
+    const source = await sourceFactory.create(tileSourceOptions);
+
+    const { url,  args } = options;
+    const fetchArgs = createFullDepthGenerationArgs(
         url,
         source,
         args,
     );
-        
-    const fetcher = new TileFetcher(fullDepthArgs);
+
+    console.log(fetchArgs);
+
+    const fetcher = TileFetcherFactory.create(fetchArgs);
     const packager = new ZipPackager();
     
     const { title } = options;
@@ -94,23 +98,34 @@ const main = async (options: MapTilePackageGenerationOptions) => {
 
 createDirectories();
 
+// const packageGenerationOptions: MapTilePackageGenerationOptions = {
+//     title: 'test-package-2',
+//     type: 'xyz',
+//     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
+//     maxZoom: 17,
+//     args: {
+//         type: 'point',
+//         x: -8202328.325,
+//         y: 5702490.224,
+//         startZ: 10,
+//         endZ: 11,
+//     }
+// };
+
+const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL.geojson`);
+const polygon = serviceCenters.features[0].geometry as Polygon;
+
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
     type: 'xyz',
     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
     maxZoom: 17,
-    generation: {
-        type: 'depth',
-        args: {
-            x: 0,
-            y: 0,
-            startZ: 1,
-            endZ: 8,
-        }
+    args: {
+        type: 'polygon',
+        polygon,
+        startZ: 11,
+        endZ: 12,
     }
 };
-
-const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude.geojson`);
-const firstGeometry = serviceCenters.features[0].geometry;
 
 main(packageGenerationOptions);

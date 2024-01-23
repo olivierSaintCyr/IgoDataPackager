@@ -1,23 +1,34 @@
+import { Geometry, MultiPolygon, Polygon } from 'geojson';
 import TileSource from 'ol/source/Tile';
 
-export type GenerationType = 'depth'
-export type GenerationArgs = DepthGenerationArgs;
+export type GenerationArgs = PointGenerationArgs | PolygonGenerationArgs | MultiPolygonGenerationArgs;
 
 export interface BaseTileFetcherArgs {
     url: string;
     source: TileSource;
 }
 
-export interface DepthGenerationArgs {
-    x: number,
-    y: number,
-    startZ: number,
-    endZ: number,
+export interface BaseDepthGenerationArgs {
+    startZ: number;
+    endZ: number;
 }
 
-export type DepthFetchArgs = BaseTileFetcherArgs & DepthGenerationArgs;
+export interface PointGenerationArgs extends BaseDepthGenerationArgs {
+    type: 'point';
+    x: number;
+    y: number;
+}
 
-export interface DepthFetchArgs2 {
-    q: number,
-    v: number,
+export interface PolygonGenerationArgs extends BaseDepthGenerationArgs {
+    type: 'polygon';
+    polygon: Polygon;
+}
+
+export interface MultiPolygonGenerationArgs extends BaseDepthGenerationArgs {
+    type: 'multipolygon';
+    multipolygon: MultiPolygon;
+}
+
+export interface FetchArgs extends BaseTileFetcherArgs {
+    args: GenerationArgs;
 }

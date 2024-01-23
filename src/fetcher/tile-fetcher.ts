@@ -1,4 +1,4 @@
-import { DepthFetchArgs } from './tile-fetcher-args.interface';
+import { BaseTileFetcherArgs } from './tile-fetcher-args.interface';
 import { getAllChildTiles } from './fetcher-utils';
 import { Tile } from './Tile';
 import { finished } from 'stream/promises';
@@ -11,10 +11,12 @@ import { createFromTemplate } from 'ol/tileurlfunction.js';
 import { UrlFunction } from 'ol/Tile';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import { PromisePool } from '@supercharge/promise-pool'
+import TileSource from 'ol/source/Tile';
 
-export class TileFetcher {
+export abstract class TileFetcher {
     private urlGenerator: UrlFunction;
-    constructor(private args: DepthFetchArgs) {
+
+    constructor(private args: BaseTileFetcherArgs) {
         const { url, source } = args;
         if (!source.tileGrid) {
             throw Error('Invalid data source no tileGrid provided');
@@ -26,27 +28,16 @@ export class TileFetcher {
         this.urlGenerator = createFromTemplate(url, source.tileGrid);
     }
 
+    protected abstract getTiles(source: TileSource): Tile[];
+
     private getUrls(): string[] {
-        const tileGrid: TileGrid = this.args.source.tileGrid!!;
-        const tileCoord = tileGrid.getTileCoordForCoordAndZ([this.args.x, this.args.y], this.args.startZ);
-
-        const root: Tile = {
-            x: tileCoord[0],
-            y: tileCoord[1],
-            z: tileCoord[2]
-        };
-
-        const tiles = getAllChildTiles(
-            root,
-            this.args.endZ,
-            tileGrid,
-        );
-
+        const source = this.args.source;
+        const tiles = this.getTiles(source);
         return tiles.map((tile) => {
             const url = this.urlGenerator(
                 [tile.z, tile.x, tile.y],
                 0,
-                this.args.source.getProjection()!!,
+                this.args.source.getProjection()!,
             );
 
             if (!url) {

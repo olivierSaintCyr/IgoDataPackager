@@ -195,7 +195,7 @@ export const getAllTileInPolygon = (polygon: Polygon, startZ: number, endZ: numb
     return tiles;
 }
 
-export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileProj: string, tileGrid: TileGrid) => {
+export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
 
     const removeDuplicateTiles = (tiles: Tile[]): Tile[] => {
         const getTileXYZ = ({ x, y, z }: Tile) => {
@@ -211,7 +211,7 @@ export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: num
                 y: parseInt(values[1]),
                 z: parseInt(values[2]),
             }
-        })
+        });
     }
 
     const polygons: Polygon[] = multiPolygon.coordinates
