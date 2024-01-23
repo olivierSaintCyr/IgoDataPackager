@@ -1,11 +1,13 @@
 import { Tile } from './Tile';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import { fromExtent } from 'ol/geom/Polygon.js';
-import { MultiPolygon, Polygon } from 'geojson';
+import { MultiPolygon, Polygon, Position } from 'geojson';
 import { transformExtent } from 'ol/proj.js';
 import { GEOJSON_PROJECTION } from '../constants';
 import intersect from '@turf/intersect';
 import centroid from '@turf/centroid';
+import { TileCoord } from 'ol/tilecoord';
+import proj4 from 'proj4';
 
 export const zoom = (tile: Tile): Tile[] => {
     const x0 = 2 * tile.x;
@@ -68,7 +70,6 @@ export const getTilePolygon = (tile: Tile, tileGrid: TileGrid, tileProj: string)
     
     const polygon = fromExtent(transformedExtent);
     const coordinates = polygon.getCoordinates()
-    
     return {
         type: "Polygon",
         coordinates,
@@ -97,10 +98,101 @@ export const isTileInMultiPolygon = (tile: Tile, multipolygon: MultiPolygon, til
     return false;
 }
 
-export const getAllTileInPolygon = (polygon: Polygon, tileGrid: TileGrid, startZ: number, tileProj: string)  => {
+export const getNeighboringTiles = (tile: Tile, tileGrid: TileGrid): Tile[] => {
+    const { x: startX, y: startY, z } = tile;
+    const tiles: Tile[] = [];
+    const deltas = [1, -1];
+
+    for (const i of deltas) {
+        const neighboor = {
+            x: startX + i,
+            y: startY,
+            z
+        }
+
+        if (isTileInsideTileGrid(neighboor, tileGrid)) {
+            tiles.push(neighboor);
+        }
+    }
+
+    for (const j of deltas) {
+        const neighboor = {
+            x: startX,
+            y: startY + j,
+            z
+        }
+
+        if (isTileInsideTileGrid(neighboor, tileGrid)) {
+            tiles.push(neighboor);
+        } 
+    }
+    return tiles;
+}
+
+const tileCoordToTile = (tileCoord: TileCoord): Tile => {
+    return {
+        x: tileCoord[1],
+        y: tileCoord[2],
+        z: tileCoord[0],
+    }
+}
+
+const getAllTileInPolygonAtLevel = (
+    polygon: Polygon,
+    center: Position,
+    z: number,
+    tileGrid: TileGrid,
+    tileProj: string,
+) => {
+
+    const getTileXY = ({ x, y }: Tile) => `${x},${y}`;
+
+    const centerProj = proj4(GEOJSON_PROJECTION, tileProj, center)
+    console.log({center, centerProj})
+    const centerTileCoord = tileGrid.getTileCoordForCoordAndZ([centerProj[0], centerProj[1]], z);
+    const centerTile = tileCoordToTile(centerTileCoord);
+
+    const visited = new Set<string>();
+    const toVisit = [centerTile];
+
+    const tiles = []
+    while (toVisit.length != 0) {
+        const current = toVisit.shift()!;
+
+        const xy = getTileXY(current);
+        if (visited.has(xy)) {
+            continue;
+        }
+
+        visited.add(xy);
+
+        if (!isTileInPolygon(current, polygon, tileGrid, tileProj)) {
+            continue;
+        }
+
+        tiles.push(current);
+        
+        const neighbors = getNeighboringTiles(current, tileGrid);
+        toVisit.push(...neighbors);
+    }
+    return tiles;
+}
+    
+export const getAllTileInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string)  => {
     const center = centroid(polygon).geometry.coordinates;
-    const centerTileCoord = tileGrid.getTileCoordForCoordAndZ([center[0], center[1]], startZ);
-    console.log(centerTileCoord);
+    
+    const tiles = []
+    for (let z = startZ; z <= endZ; z++) {
+        const tilesAtLevel = getAllTileInPolygonAtLevel(
+            polygon,
+            center,
+            z,
+            tileGrid,
+            tileProj,
+        )
+        tiles.push(...tilesAtLevel);
+    }
+    return tiles;
 }
 
 export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileProj: string, tileGrid: TileGrid) => {
