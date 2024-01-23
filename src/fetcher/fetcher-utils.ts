@@ -8,8 +8,8 @@ import intersect from '@turf/intersect';
 import centroid from '@turf/centroid';
 
 export const zoom = (tile: Tile): Tile[] => {
-    const x0 = 2 * (tile.x - 1) + 1;
-    const y0 = 2 * (tile.y - 1) + 1;
+    const x0 = 2 * tile.x;
+    const y0 = 2 * tile.y;
     const z = tile.z + 1;
     const tiles: Tile[] = [];
     for (let i = 0; i < 2; i++) {
@@ -103,6 +103,42 @@ export const getAllTileInPolygon = (polygon: Polygon, tileGrid: TileGrid, startZ
     console.log(centerTileCoord);
 }
 
-export const getAllTileInMultiPolygon = () => {
+export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileProj: string, tileGrid: TileGrid) => {
 
+    const removeDuplicateTiles = (tiles: Tile[]): Tile[] => {
+        const getTileXYZ = ({ x, y, z }: Tile) => {
+            return `${x},${y},${z}`;
+        };
+        
+        const xyzs = new Set<string>(tiles.map(getTileXYZ));
+
+        return [...xyzs.values()].map(xyz => {
+            const values = xyz.split(',');
+            return {
+                x: parseInt(values[0]),
+                y: parseInt(values[1]),
+                z: parseInt(values[2]),
+            }
+        })
+    }
+
+    const polygons: Polygon[] = multiPolygon.coordinates
+        .map(coordinates => { 
+            return { 
+                type: 'Polygon',
+                coordinates,
+            };
+        });
+    
+    const tiles: Tile[] = polygons.flatMap((polygon) => {
+        return getAllTileInPolygon(
+            polygon,
+            startZ,
+            endZ,
+            tileGrid,
+            tileProj,
+        );
+    });
+
+    return removeDuplicateTiles(tiles);
 }
