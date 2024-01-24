@@ -1,6 +1,6 @@
 import { DATA_DIR, DOWNLOAD_DIR, PACKAGE_DIR } from './constants';
 import { TileFetcher } from './fetcher/tile-fetcher';
-import { FetchArgs, GenerationArgs, PolygonGenerationArgs } from './fetcher/tile-fetcher-args.interface';
+import { FetchArgs, GenerationArgs } from './fetcher/tile-fetcher-args.interface';
 import fs from 'fs';
 import { ZipPackager } from './packager';
 import { DownloadedFile } from './fetcher/downloaded-file.interface';
@@ -9,9 +9,8 @@ import { MapTilePackageGenerationOptions } from './map-tile-package-generation-o
 import { DataSourceFactory } from './datasource/datasource-factory';
 import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
-import { FeatureCollection, Polygon } from 'geojson';
+import { FeatureCollection, MultiPolygon } from 'geojson';
 import { TileFetcherFactory } from './fetcher/tile-fetcher-factory';
-import { PolygonPreprocessor } from './polygon-preprocessor/polygon-preprocessor';
 
 const createDirectory = (path: string) => {
     if (fs.existsSync(path)) {
@@ -80,6 +79,41 @@ const saveGeoJson = (collection: FeatureCollection, path: string) => {
     fs.writeFileSync(path, JSON.stringify(collection));
 }
 
+const getFeatureCollectionMultiPolygon = (collection: FeatureCollection): MultiPolygon => {
+    const { features } = collection;
+    const coordinates = features.map(({ geometry }) => {
+        if (geometry.type != 'Polygon') {
+            throw Error('Feature collection not a Polygon collection');
+        }
+        return geometry.coordinates;
+    });
+    return {
+        type: 'MultiPolygon',
+        coordinates,
+    }
+}
+
+const mergeMultiPolygonToFeatureCollectionInPlace = (collection: FeatureCollection, multiPolygon: MultiPolygon): FeatureCollection => {
+    const { features } = collection;
+    const { coordinates: multiCoordinates } = multiPolygon;
+
+    if (features.length != multiCoordinates.length) {
+        throw Error('Feature collection has not the same ammount of polygons as multipolygon');
+    }
+    
+    for (let i = 0; i < collection.features.length; i++) {
+        const feature = features[i];
+        const coordinates = multiCoordinates[i];
+
+        if (feature.geometry.type != 'Polygon') {
+            throw Error('Feature collection not a Polygon collection');
+        }
+
+        feature.geometry.coordinates = coordinates;
+    }
+    return collection;
+}
+
 const main = async (options: MapTilePackageGenerationOptions) => {
     const tileSourceOptions: TileSourceOptions = createTileSourceOptions(options);
 
@@ -117,8 +151,38 @@ createDirectories();
 //     }
 // };
 
-const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL.geojson`);
-const polygon = serviceCenters.features[0].geometry as Polygon;
+// const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL.geojson`);
+// const polygon = serviceCenters.features[0].geometry as Polygon;
+
+// const packageGenerationOptions: MapTilePackageGenerationOptions = {
+//     title: 'test-package-2',
+//     type: 'xyz',
+//     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
+//     maxZoom: 17,
+//     args: {
+//         type: 'polygon',
+//         polygon,
+//         startZ: 1,
+//         endZ: 15,
+//         preprocessArgs: {
+//             simplify: {
+//                 tolerance: 0.03,
+//                 highQuality: false,
+//             },
+//             buffer: {
+//                 radius: 5,
+//                 units: 'kilometers',
+//             }
+//         },
+//     },
+// };
+
+const serviceCenterNames = ['Aéroports nordiques', ]
+
+const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude.geojson`);
+serviceCenters.features = serviceCenters.features.filter(({ properties }) => serviceCenterNames.includes(properties?.nom_unite_));
+
+const multipolygon = getFeatureCollectionMultiPolygon(serviceCenters);
 
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
@@ -126,10 +190,10 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
     maxZoom: 17,
     args: {
-        type: 'polygon',
-        polygon,
-        startZ: 1,
-        endZ: 15,
+        type: 'multipolygon',
+        multipolygon,
+        startZ: 10,
+        endZ: 12,
         preprocessArgs: {
             simplify: {
                 tolerance: 0.03,
