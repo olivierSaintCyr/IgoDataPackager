@@ -1,6 +1,6 @@
 import { DATA_DIR, DOWNLOAD_DIR, PACKAGE_DIR } from './constants';
 import { TileFetcher } from './fetcher/tile-fetcher';
-import { FetchArgs, GenerationArgs } from './fetcher/tile-fetcher-args.interface';
+import { FetchArgs, GenerationArgs, PolygonGenerationArgs } from './fetcher/tile-fetcher-args.interface';
 import fs from 'fs';
 import { ZipPackager } from './packager';
 import { DownloadedFile } from './fetcher/downloaded-file.interface';
@@ -11,6 +11,7 @@ import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
 import { FeatureCollection, Polygon } from 'geojson';
 import { TileFetcherFactory } from './fetcher/tile-fetcher-factory';
+import { PolygonPreprocessor } from './polygon-preprocessor/polygon-preprocessor';
 
 const createDirectory = (path: string) => {
     if (fs.existsSync(path)) {
@@ -74,6 +75,11 @@ const loadGeoJson = (path: string): FeatureCollection => {
     return JSON.parse(data.toString());
 };
 
+const saveGeoJson = (collection: FeatureCollection, path: string) => {
+    console.log(`Saving ${path}`);
+    fs.writeFileSync(path, JSON.stringify(collection));
+}
+
 const main = async (options: MapTilePackageGenerationOptions) => {
     const tileSourceOptions: TileSourceOptions = createTileSourceOptions(options);
 
@@ -122,9 +128,19 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
     args: {
         type: 'polygon',
         polygon,
-        startZ: 11,
-        endZ: 12,
-    }
+        startZ: 1,
+        endZ: 15,
+        preprocessArgs: {
+            simplify: {
+                tolerance: 0.03,
+                highQuality: false,
+            },
+            buffer: {
+                radius: 5,
+                units: 'kilometers',
+            }
+        },
+    },
 };
 
 main(packageGenerationOptions);

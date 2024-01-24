@@ -21,8 +21,10 @@
   "dependencies": {
     "@supercharge/promise-pool": "^3.1.0",
     "@turf/boolean-point-in-polygon": "^6.5.0",
+    "@turf/buffer": "^6.5.0",
     "@turf/centroid": "^6.5.0",
     "@turf/intersect": "^6.5.0",
+    "@turf/simplify": "^6.5.0",
     "@types/adm-zip": "^0.5.5",
     "@types/archiver": "^6.0.2",
     "@types/geojson": "^7946.0.13",

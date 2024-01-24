@@ -3,6 +3,8 @@ import { getAllTileInPolygon } from './fetcher-utils';
 import { TileFetcher } from './tile-fetcher';
 import TileSource from 'ol/source/Tile';
 import { BaseTileFetcherArgs, PolygonGenerationArgs } from './tile-fetcher-args.interface';
+import { Polygon } from 'geojson';
+import { PolygonPreprocessor } from '../polygon-preprocessor/polygon-preprocessor';
 
 export class PolygonTileFetcher extends TileFetcher {
     constructor(
@@ -11,6 +13,17 @@ export class PolygonTileFetcher extends TileFetcher {
     ) {
         super(baseArgs);
     }
+
+    private preprocessPolygon(polygon: Polygon) {
+        const { preprocessArgs } = this.generationArgs;
+        if (!preprocessArgs) {
+            return polygon;
+        }
+
+        const preprocessor = new PolygonPreprocessor(preprocessArgs);
+        return preprocessor.process(polygon);
+    }
+
     protected getTiles(source: TileSource): Tile[] {
         const projection = source.getProjection()?.getCode();
         if (!projection) {
@@ -18,9 +31,11 @@ export class PolygonTileFetcher extends TileFetcher {
         }
         const tileGrid = source.tileGrid!;
         const { polygon, startZ, endZ } = this.generationArgs;
+
+        const processedPolygon = this.preprocessPolygon(polygon);
         
         return getAllTileInPolygon(
-            polygon,
+            processedPolygon,
             startZ,
             endZ,
             tileGrid,
