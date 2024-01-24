@@ -51,13 +51,14 @@ const packageData = async (packageName: string, fetcher: TileFetcher, packager: 
     deleteData(downloadedFiles);
 }
 
-const createTileSourceOptions = (packageGenerationOptions: MapTilePackageGenerationOptions) => {
-    const { type, url, maxZoom } = packageGenerationOptions;
+const createTileSourceOptions = (packageGenerationOptions: MapTilePackageGenerationOptions): TileSourceOptions => {
+    const { type, url, maxZoom, projection } = packageGenerationOptions;
     return {
         type,
         url,
         maxZoom,
-    }
+        projection,
+    };
 };
 
 const createFullDepthGenerationArgs = (url: string, source: TileSource, generationArgs: GenerationArgs): FetchArgs => {
@@ -188,6 +189,7 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
     type: 'xyz',
     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
+    projection: 'EPSG:3857',
     maxZoom: 17,
     args: {
         type: 'multipolygon',

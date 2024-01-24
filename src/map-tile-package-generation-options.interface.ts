@@ -5,6 +5,7 @@ export interface MapTilePackageGenerationOptions {
     title: string;
     type: TileSourceType;
     url: string;
+    projection: string;
     maxZoom: number;
     args: GenerationArgs;
 }
