@@ -20,6 +20,8 @@ export class PolygonTileFetcher extends TileFetcher {
             return polygon;
         }
 
+        console.log(`preprocessing 1 polygon`);
+
         const preprocessor = new PolygonPreprocessor(preprocessArgs);
         return preprocessor.process(polygon);
     }

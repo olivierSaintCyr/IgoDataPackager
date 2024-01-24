@@ -21,11 +21,16 @@ export class MultiPolygonTileFetcher extends TileFetcher {
         }
 
         const preprocessor = new PolygonPreprocessor(preprocessArgs);
-        
+        console.log(`preprocessing ${multiPolygon.coordinates.length} polygons`);
+
         const coordinates: Position[][][] = multiPolygon.coordinates
-            .map(coordinates => { 
+            .map((coordinates, index) => {
+                console.log()
                 const polygon: Polygon = { type: 'Polygon', coordinates };
                 const preprocced = preprocessor.process(polygon);
+
+                console.log(`preprocessing done at ${(index + 1)/multiPolygon.coordinates.length}`);
+
                 return preprocced.coordinates;
             });
 
