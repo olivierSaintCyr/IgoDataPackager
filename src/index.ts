@@ -177,7 +177,7 @@ createDirectories();
 //     },
 // };
 
-const serviceCenterNames = ['Aéroports nordiques', ]
+const serviceCenterNames = ["Dir. du soutien à l'entretien courant", "CS de Joliette"]
 
 const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude.geojson`);
 serviceCenters.features = serviceCenters.features.filter(({ properties }) => serviceCenterNames.includes(properties?.nom_unite_));
@@ -192,8 +192,8 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
     args: {
         type: 'multipolygon',
         multipolygon,
-        startZ: 10,
-        endZ: 12,
+        startZ: 1,
+        endZ: 17,
         preprocessArgs: {
             simplify: {
                 tolerance: 0.03,

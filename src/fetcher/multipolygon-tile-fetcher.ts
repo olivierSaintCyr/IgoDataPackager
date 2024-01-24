@@ -56,6 +56,6 @@ export class MultiPolygonTileFetcher extends TileFetcher {
             endZ,
             tileGrid,
             projection,
-        )
+        );
     }
 }

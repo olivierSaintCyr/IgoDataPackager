@@ -190,7 +190,11 @@ export const getAllTileInPolygon = (polygon: Polygon, startZ: number, endZ: numb
             tileGrid,
             tileProj,
         )
-        tiles.push(...tilesAtLevel);
+
+        // can't use tiles.push(...tilesAtLevel); => lead to maximum call stack error.
+        for (const tile of tilesAtLevel) {
+            tiles.push(tile);
+        } 
     }
     return tiles;
 }
