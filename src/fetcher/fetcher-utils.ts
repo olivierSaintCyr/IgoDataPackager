@@ -8,7 +8,7 @@ import centroid from '@turf/centroid';
 import { TileCoord } from 'ol/tilecoord';
 import proj4 from 'proj4';
 import booleanIntersects from '@turf/boolean-intersects';
-import { BBox, bbox, bboxPolygon } from '@turf/turf';
+import { BBox, bbox, bboxPolygon, geometry } from '@turf/turf';
 import { intersect } from '@turf/turf';
 
 export const zoom = (tile: Tile): Tile[] => {
@@ -241,7 +241,7 @@ export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: num
     return removeDuplicateTiles(tiles);
 }
 
-export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): MultiPolygon => {
+export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): FeatureCollection => {
     const splitBbox = ([xmin, ymin, xmax, ymax]: BBox): BBox[] => {
         const bboxes: BBox[] = []
 
@@ -265,24 +265,26 @@ export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): Multi
     const polygonBbox = bbox(polygon);
     const bboxes = splitBbox(polygonBbox);
 
-    const coordinates: Position[][][] = [];
+
+    const features: Feature[] = [];
     for (const polygonBbox of bboxes) {
         const inter = intersect(bboxPolygon(polygonBbox), polygon);
         if (!inter) {
             continue;
         }
-        const { geometry: { type, coordinates: coords } } = inter;
-        if (type == 'MultiPolygon') {
-            for (const coord of coords) {
-                coordinates.push(coord); // not using ...coord to prevent call stack error
+        const { geometry } = inter;
+        const feature: Feature = {
+            type: 'Feature',
+            geometry,
+            properties: {
+                bbox: polygonBbox,
             }
-        } else {
-            coordinates.push(coords)
         }
+        features.push(feature);
     }
 
     return {
-        type: 'MultiPolygon',
-        coordinates,
+        type: 'FeatureCollection',
+        features
     }
 }
