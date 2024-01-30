@@ -1,4 +1,4 @@
-import { Polygon } from 'geojson';
+import { MultiPolygon, Polygon } from 'geojson';
 import { PolygonPreprocessingArgs } from './polygon-preprocessor-args.interface';
 import simplify from '@turf/simplify';
 import buffer from '@turf/buffer';
@@ -14,11 +14,15 @@ export class PolygonPreprocessor {
         return this.args.buffer;
     }
 
-    process(polygon: Polygon): Polygon {
+    process(polygon: Polygon | MultiPolygon): Polygon | MultiPolygon {
         const { radius, units, steps } = this.getBufferOptions();
         
         const buffered = buffer(polygon, radius, { units, steps });
         
+        if (!this.args.simplify) {
+            return buffered.geometry;
+        }
+    
         const simplified = simplify(buffered.geometry, this.args.simplify);
         return simplified;
     }

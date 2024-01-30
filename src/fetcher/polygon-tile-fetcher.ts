@@ -5,6 +5,7 @@ import TileSource from 'ol/source/Tile';
 import { BaseTileFetcherArgs, PolygonGenerationArgs } from './tile-fetcher-args.interface';
 import { Polygon } from 'geojson';
 import { PolygonPreprocessor } from '../polygon-preprocessor/polygon-preprocessor';
+import rbush from 'rbush';
 
 export class PolygonTileFetcher extends TileFetcher {
     constructor(
@@ -34,8 +35,7 @@ export class PolygonTileFetcher extends TileFetcher {
         const tileGrid = source.tileGrid!;
         const { polygon, startZ, endZ } = this.generationArgs;
 
-        const processedPolygon = this.preprocessPolygon(polygon);
-        
+        const processedPolygon = this.preprocessPolygon(polygon) as Polygon;
         return getAllTileInPolygon(
             processedPolygon,
             startZ,

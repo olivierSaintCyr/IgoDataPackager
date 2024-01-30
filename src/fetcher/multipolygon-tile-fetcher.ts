@@ -2,7 +2,7 @@ import TileSource from 'ol/source/Tile';
 import { Tile } from './Tile';
 import { TileFetcher } from './tile-fetcher';
 import { BaseTileFetcherArgs, MultiPolygonGenerationArgs } from './tile-fetcher-args.interface';
-import { getAllTileInMultiPolygon } from './fetcher-utils';
+import { getAllTileInMultiPolygon, getAllTileInPolygon } from './fetcher-utils';
 import { PolygonPreprocessor } from '../polygon-preprocessor/polygon-preprocessor';
 import { MultiPolygon, Polygon, Position } from 'geojson';
 
@@ -14,30 +14,13 @@ export class MultiPolygonTileFetcher extends TileFetcher {
         super(baseArgs);
     }
 
-    private preprocessMultiPolygon(multiPolygon: MultiPolygon): MultiPolygon {
+    private preprocessMultiPolygon(multiPolygon: MultiPolygon): MultiPolygon | Polygon {
         const { preprocessArgs } = this.generationArgs;
         if (!preprocessArgs) {
             return multiPolygon;
         }
-
-        const preprocessor = new PolygonPreprocessor(preprocessArgs);
-        console.log(`preprocessing ${multiPolygon.coordinates.length} polygons`);
-
-        const coordinates: Position[][][] = multiPolygon.coordinates
-            .map((coordinates, index) => {
-                console.log()
-                const polygon: Polygon = { type: 'Polygon', coordinates };
-                const preprocced = preprocessor.process(polygon);
-
-                console.log(`preprocessing done at ${(index + 1)/multiPolygon.coordinates.length}`);
-
-                return preprocced.coordinates;
-            });
-
-        return {
-            type: 'MultiPolygon',
-            coordinates,
-        };
+        const processor = new PolygonPreprocessor(preprocessArgs);
+        return processor.process(multiPolygon);
     }
 
     protected getTiles(source: TileSource): Tile[] {
@@ -48,10 +31,20 @@ export class MultiPolygonTileFetcher extends TileFetcher {
         const tileGrid = source.tileGrid!;
         const { multipolygon, startZ, endZ } = this.generationArgs;
 
-        const processedMultiPolygon = this.preprocessMultiPolygon(multipolygon);
-        
+        const processed = this.preprocessMultiPolygon(multipolygon);
+
+        if (processed.type == 'Polygon') {
+            return getAllTileInPolygon(
+                processed,
+                startZ,
+                endZ,
+                tileGrid,
+                projection,
+            );
+        }
+
         return getAllTileInMultiPolygon(
-            processedMultiPolygon,
+            processed,
             startZ,
             endZ,
             tileGrid,
