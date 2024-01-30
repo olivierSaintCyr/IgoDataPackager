@@ -9,7 +9,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { DownloadedFile } from './downloaded-file.interface';
 import { createFromTemplate } from 'ol/tileurlfunction.js';
 import { UrlFunction } from 'ol/Tile';
-import TileGrid from 'ol/tilegrid/TileGrid';
 import { PromisePool } from '@supercharge/promise-pool'
 import TileSource from 'ol/source/Tile';
 

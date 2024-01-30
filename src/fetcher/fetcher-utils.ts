@@ -4,10 +4,10 @@ import { fromExtent } from 'ol/geom/Polygon.js';
 import { MultiPolygon, Polygon, Position } from 'geojson';
 import { transformExtent } from 'ol/proj.js';
 import { GEOJSON_PROJECTION } from '../constants';
-import intersect from '@turf/intersect';
 import centroid from '@turf/centroid';
 import { TileCoord } from 'ol/tilecoord';
 import proj4 from 'proj4';
+import booleanIntersects from '@turf/boolean-intersects';
 
 export const zoom = (tile: Tile): Tile[] => {
     const x0 = 2 * tile.x;
@@ -79,7 +79,7 @@ export const getTilePolygon = (tile: Tile, tileGrid: TileGrid, tileProj: string)
 
 export const isTileInPolygon = (tile: Tile, polygon: Polygon, tileGrid: TileGrid, tileProj: string): boolean => {
     const tilePolygon = getTilePolygon(tile, tileGrid, tileProj);
-    return !!intersect(tilePolygon, polygon);
+    return booleanIntersects(tilePolygon, polygon);
 }
 
 export const isTileInMultiPolygon = (tile: Tile, multipolygon: MultiPolygon, tileGrid: TileGrid, tileProj: string): boolean => {
@@ -91,7 +91,7 @@ export const isTileInMultiPolygon = (tile: Tile, multipolygon: MultiPolygon, til
             coordinates,
         }
 
-        if (!!intersect(tilePolygon, polygon)) {
+        if (booleanIntersects(tilePolygon, polygon)) {
             return true;
         }
     }
