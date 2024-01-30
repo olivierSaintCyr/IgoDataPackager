@@ -1,13 +1,15 @@
 import { Tile } from './Tile';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import { fromExtent } from 'ol/geom/Polygon.js';
-import { MultiPolygon, Polygon, Position } from 'geojson';
+import { Feature, FeatureCollection, GeoJsonProperties, MultiPolygon, Polygon, Position } from 'geojson';
 import { transformExtent } from 'ol/proj.js';
 import { GEOJSON_PROJECTION } from '../constants';
 import centroid from '@turf/centroid';
 import { TileCoord } from 'ol/tilecoord';
 import proj4 from 'proj4';
 import booleanIntersects from '@turf/boolean-intersects';
+import { BBox, bbox, bboxPolygon } from '@turf/turf';
+import { intersect } from '@turf/turf';
 
 export const zoom = (tile: Tile): Tile[] => {
     const x0 = 2 * tile.x;
@@ -237,4 +239,50 @@ export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: num
     });
 
     return removeDuplicateTiles(tiles);
+}
+
+export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): MultiPolygon => {
+    const splitBbox = ([xmin, ymin, xmax, ymax]: BBox): BBox[] => {
+        const bboxes: BBox[] = []
+
+        const totalPoints = polygon.coordinates.map(coords => coords.length).reduce((a, b) => a + b);
+        const bboxSplit = Math.ceil(Math.sqrt(totalPoints / avgPointsPerSplit));
+        
+        const delta = { x: (xmax - xmin)/bboxSplit, y: (ymax - ymin)/bboxSplit };
+        
+        for (let x = xmin; x <= xmax; x += delta.x) {
+            for (let y = ymin; y <= ymax; y += delta.y) {
+                const cXmin = x;
+                const cYmin = y;
+                const cXmax = x + delta.x;
+                const cYMax = y + delta.y;
+                bboxes.push([cXmin, cYmin, cXmax, cYMax]);
+            }
+        }
+        return bboxes;
+    }
+
+    const polygonBbox = bbox(polygon);
+    const bboxes = splitBbox(polygonBbox);
+
+    const coordinates: Position[][][] = [];
+    for (const polygonBbox of bboxes) {
+        const inter = intersect(bboxPolygon(polygonBbox), polygon);
+        if (!inter) {
+            continue;
+        }
+        const { geometry: { type, coordinates: coords } } = inter;
+        if (type == 'MultiPolygon') {
+            for (const coord of coords) {
+                coordinates.push(coord); // not using ...coord to prevent call stack error
+            }
+        } else {
+            coordinates.push(coords)
+        }
+    }
+
+    return {
+        type: 'MultiPolygon',
+        coordinates,
+    }
 }
