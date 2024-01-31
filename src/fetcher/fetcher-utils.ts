@@ -140,11 +140,11 @@ const tileCoordToTile = (tileCoord: TileCoord): Tile => {
 }
 
 const getAllTileInPolygonAtLevel = (
-    polygon: Polygon,
     center: Position,
     z: number,
     tileGrid: TileGrid,
     tileProj: string,
+    isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean,
 ) => {
 
     const getTileXY = ({ x, y }: Tile) => `${x},${y}`;
@@ -168,7 +168,7 @@ const getAllTileInPolygonAtLevel = (
 
         visited.add(xy);
 
-        if (!isTileInPolygon(current, polygon, tileGrid, tileProj)) {
+        if (!isTileInPolygonCallback(current, tileGrid, tileProj)) {
             continue;
         }
 
@@ -180,17 +180,17 @@ const getAllTileInPolygonAtLevel = (
     return tiles;
 }
     
-export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string)  => {
+const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean,)  => {
     const center = centroid(polygon).geometry.coordinates;
     
     const tiles = []
     for (let z = startZ; z <= endZ; z++) {
         const tilesAtLevel = getAllTileInPolygonAtLevel(
-            polygon,
             center,
             z,
             tileGrid,
             tileProj,
+            isTileInPolygonCallback,
         )
 
         // can't use tiles.push(...tilesAtLevel); => lead to maximum call stack error.
@@ -199,6 +199,17 @@ export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: num
         } 
     }
     return tiles;
+}
+
+export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string)  => {
+    return getAllTilesInPolygonInternal(
+        polygon,
+        startZ,
+        endZ,
+        tileGrid,
+        tileProj,
+        (tile, tileGrid, tileProj) => isTileInPolygon(tile, polygon, tileGrid, tileProj),
+    )
 }
 
 export const getAllTilesInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
