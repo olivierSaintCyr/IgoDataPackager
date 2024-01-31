@@ -1,8 +1,7 @@
 import { BaseTileFetcherArgs } from './tile-fetcher-args.interface';
-import { getAllChildTiles } from './fetcher-utils';
 import { Tile } from './Tile';
 import { finished } from 'stream/promises';
-import axios, { Axios, AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { DOWNLOAD_DIR } from '../constants';
 import { createWriteStream } from 'fs';
 import { v4 as uuidv4 } from 'uuid';

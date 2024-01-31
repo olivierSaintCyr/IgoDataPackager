@@ -9,7 +9,7 @@ import { MapTilePackageGenerationOptions } from './map-tile-package-generation-o
 import { DataSourceFactory } from './datasource/datasource-factory';
 import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
-import { FeatureCollection, MultiPolygon } from 'geojson';
+import { FeatureCollection, GeoJsonObject, MultiPolygon } from 'geojson';
 import { TileFetcherFactory } from './fetcher/tile-fetcher-factory';
 
 const createDirectory = (path: string) => {
@@ -75,7 +75,7 @@ const loadGeoJson = (path: string): FeatureCollection => {
     return JSON.parse(data.toString());
 };
 
-const saveGeoJson = (collection: FeatureCollection, path: string) => {
+const saveGeoJson = (collection: GeoJsonObject, path: string) => {
     console.log(`Saving ${path}`);
     fs.writeFileSync(path, JSON.stringify(collection));
 }
@@ -133,7 +133,7 @@ const main = async (options: MapTilePackageGenerationOptions) => {
     const packager = new ZipPackager();
     
     const { title } = options;
-    await packageData(title, fetcher, packager);    
+    await packageData(title, fetcher, packager); 
 }
 
 createDirectories();
@@ -152,38 +152,8 @@ createDirectories();
 //     }
 // };
 
-// const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL.geojson`);
-// const polygon = serviceCenters.features[0].geometry as Polygon;
-
-// const packageGenerationOptions: MapTilePackageGenerationOptions = {
-//     title: 'test-package-2',
-//     type: 'xyz',
-//     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
-//     maxZoom: 17,
-//     args: {
-//         type: 'polygon',
-//         polygon,
-//         startZ: 1,
-//         endZ: 15,
-//         preprocessArgs: {
-//             simplify: {
-//                 tolerance: 0.03,
-//                 highQuality: false,
-//             },
-//             buffer: {
-//                 radius: 5,
-//                 units: 'kilometers',
-//             }
-//         },
-//     },
-// };
-
-const serviceCenterNames = ["Dir. du soutien à l'entretien courant", "CS de Joliette"]
-
-const serviceCenters = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude.geojson`);
-serviceCenters.features = serviceCenters.features.filter(({ properties }) => serviceCenterNames.includes(properties?.nom_unite_));
-
-const multipolygon = getFeatureCollectionMultiPolygon(serviceCenters);
+const roads = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL_reseau_routier.geojson`);
+const multipolygon = roads.features[0].geometry as MultiPolygon;
 
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
@@ -198,15 +168,17 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
         endZ: 17,
         preprocessArgs: {
             simplify: {
-                tolerance: 0.03,
+                tolerance: 0.002,
                 highQuality: false,
             },
             buffer: {
-                radius: 5,
-                units: 'kilometers',
+                radius: 500,
+                units: 'meters',
             }
         },
     },
 };
+
+saveGeoJson(multipolygon, 'multipolygon.geojson');
 
 main(packageGenerationOptions);
