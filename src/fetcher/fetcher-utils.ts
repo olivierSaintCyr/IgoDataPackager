@@ -180,7 +180,7 @@ const getAllTileInPolygonAtLevel = (
     return tiles;
 }
     
-const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean,)  => {
+const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean)  => {
     const center = centroid(polygon).geometry.coordinates;
     
     const tiles = []
@@ -212,7 +212,7 @@ export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: num
     )
 }
 
-export const getAllTilesInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
+const getAllTilesInMultiPolygonInternal = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, polygon: Polygon, tileGrid: TileGrid, tileProj: string) => boolean) => {
 
     const removeDuplicateTiles = (tiles: Tile[]): Tile[] => {
         const getTileXYZ = ({ x, y, z }: Tile) => {
@@ -240,16 +240,28 @@ export const getAllTilesInMultiPolygon = (multiPolygon: MultiPolygon, startZ: nu
         });
     
     const tiles: Tile[] = polygons.flatMap((polygon) => {
-        return getAllTilesInPolygon(
+        return getAllTilesInPolygonInternal(
             polygon,
             startZ,
             endZ,
             tileGrid,
             tileProj,
+            (tile, tileGrid, tileProj) => isTileInPolygonCallback(tile, polygon, tileGrid, tileProj),
         );
     });
 
     return removeDuplicateTiles(tiles);
+}
+
+export const getAllTilesInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
+    return getAllTilesInMultiPolygonInternal(
+        multiPolygon,
+        startZ,
+        endZ,
+        tileGrid,
+        tileProj,
+        (tile, polygon, tileGrid, tileProj) => isTileInPolygon(tile, polygon, tileGrid, tileProj),
+    );
 }
 
 export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): FeatureCollection => {
