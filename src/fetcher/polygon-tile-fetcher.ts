@@ -1,5 +1,5 @@
 import { Tile } from './Tile';
-import { getAllTileInPolygon } from './fetcher-utils';
+import { getAllTilesInPolygon } from './fetcher-utils';
 import { TileFetcher } from './tile-fetcher';
 import TileSource from 'ol/source/Tile';
 import { BaseTileFetcherArgs, PolygonGenerationArgs } from './tile-fetcher-args.interface';
@@ -36,7 +36,7 @@ export class PolygonTileFetcher extends TileFetcher {
         const { polygon, startZ, endZ } = this.generationArgs;
 
         const processedPolygon = this.preprocessPolygon(polygon) as Polygon;
-        return getAllTileInPolygon(
+        return getAllTilesInPolygon(
             processedPolygon,
             startZ,
             endZ,

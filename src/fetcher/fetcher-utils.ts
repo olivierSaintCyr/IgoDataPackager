@@ -180,7 +180,7 @@ const getAllTileInPolygonAtLevel = (
     return tiles;
 }
     
-export const getAllTileInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string)  => {
+export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string)  => {
     const center = centroid(polygon).geometry.coordinates;
     
     const tiles = []
@@ -201,7 +201,7 @@ export const getAllTileInPolygon = (polygon: Polygon, startZ: number, endZ: numb
     return tiles;
 }
 
-export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
+export const getAllTilesInMultiPolygon = (multiPolygon: MultiPolygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
 
     const removeDuplicateTiles = (tiles: Tile[]): Tile[] => {
         const getTileXYZ = ({ x, y, z }: Tile) => {
@@ -229,7 +229,7 @@ export const getAllTileInMultiPolygon = (multiPolygon: MultiPolygon, startZ: num
         });
     
     const tiles: Tile[] = polygons.flatMap((polygon) => {
-        return getAllTileInPolygon(
+        return getAllTilesInPolygon(
             polygon,
             startZ,
             endZ,
@@ -287,4 +287,17 @@ export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): Featu
         type: 'FeatureCollection',
         features
     }
+}
+
+export const getNumberOfPointsInPolygon = (polygon: Polygon) => {
+    return polygon.coordinates.map(p => p.length).reduce((a, b) => a + b)
+}
+
+export const getNumberOfPointsInMultiPolygon = (multiPolygon: MultiPolygon) => {
+    return multiPolygon.coordinates
+        .map(polygon => polygon
+            .map(points => points.length)
+            .reduce((a, b) => a + b)
+        )
+        .reduce((a, b) => a + b)
 }
