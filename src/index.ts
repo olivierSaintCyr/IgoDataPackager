@@ -9,7 +9,7 @@ import { MapTilePackageGenerationOptions } from './map-tile-package-generation-o
 import { DataSourceFactory } from './datasource/datasource-factory';
 import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
-import { FeatureCollection, GeoJsonObject, MultiPolygon } from 'geojson';
+import { Feature, FeatureCollection, GeoJsonObject, MultiPolygon, Position } from 'geojson';
 import { TileFetcherFactory } from './fetcher/tile-fetcher-factory';
 
 const createDirectory = (path: string) => {
@@ -82,12 +82,21 @@ const saveGeoJson = (collection: GeoJsonObject, path: string) => {
 
 const getFeatureCollectionMultiPolygon = (collection: FeatureCollection): MultiPolygon => {
     const { features } = collection;
-    const coordinates = features.map(({ geometry }) => {
-        if (geometry.type != 'Polygon') {
-            throw Error('Feature collection not a Polygon collection');
+    const coordinates: Position[][][] = [];
+
+    for (const { geometry } of features) {
+        if (geometry.type == 'Polygon') {
+            coordinates.push(geometry.coordinates);
+            continue;
         }
-        return geometry.coordinates;
-    });
+
+        if (geometry.type == 'MultiPolygon') {
+            for (const coords of geometry.coordinates) {
+                coordinates.push(coords);
+            }
+            continue;
+        }
+    }
     return {
         type: 'MultiPolygon',
         coordinates,
@@ -133,7 +142,7 @@ const main = async (options: MapTilePackageGenerationOptions) => {
     const packager = new ZipPackager();
     
     const { title } = options;
-    await packageData(title, fetcher, packager); 
+    await packageData(title, fetcher, packager);
 }
 
 createDirectories();
