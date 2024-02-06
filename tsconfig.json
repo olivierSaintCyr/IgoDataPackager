@@ -5,7 +5,10 @@
         "emitDeclarationOnly": true,
         // Ensure that Babel can safely transpile files in the TypeScript project
         "isolatedModules": true,
-        "types": ["@types/mocha", "mocha"],
+        "types": [
+          "mocha",
+          "chai"
+        ],
         "module": "ESNext",
         "esModuleInterop": true,
         "target": "ES2022",

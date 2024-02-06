@@ -4,16 +4,7 @@ import { createWriteStream } from 'fs'
 import { DOWNLOAD_DIR } from './constants';
 
 export class ZipPackager {
-    public async package(metadata: PackageMetadata, out: string) {
-        /**
-         * Package the files in the following structure:
-         *      package/
-         *      ├── data/
-         *      │   ├── tile1.png
-         *      │   └── tile2.png
-         *      └── metadata.json
-         */
-
+    public async package(metadata: PackageMetadata, out: string, downloadDir=DOWNLOAD_DIR) {
         const output = createWriteStream(out);
         const archive = archiver('zip');
         const { files } = metadata;
@@ -21,7 +12,7 @@ export class ZipPackager {
         archive.pipe(output);
         
         for (const { fileName } of files) {
-            const filePath = `${DOWNLOAD_DIR}/${fileName}`;
+            const filePath = `${downloadDir}/${fileName}`;
             const archivePath = `data/${fileName}`;
             archive.file(filePath, { name: archivePath });
         }
