@@ -4,13 +4,14 @@ import { FetchArgs, GenerationArgs } from './fetcher/tile-fetcher-args.interface
 import fs from 'fs';
 import { ZipPackager } from './packager';
 import { DownloadedFile } from './fetcher/downloaded-file.interface';
-import { PackageMetadata } from './package-metadata.interface';
+import { PackageBaseInfo, PackageMetadata } from './package-metadata.interface';
 import { MapTilePackageGenerationOptions } from './map-tile-package-generation-options.interface';
 import { DataSourceFactory } from './datasource/datasource-factory';
 import { TileSourceOptions } from './datasource/datasource-options.interface';
 import TileSource from 'ol/source/Tile';
 import { Feature, FeatureCollection, GeoJsonObject, MultiPolygon, Position } from 'geojson';
 import { TileFetcherFactory } from './fetcher/tile-fetcher-factory';
+import { createPackageDetails, createPackageMetadata, savePackageDescription } from './package-utils';
 
 const createDirectory = (path: string) => {
     if (fs.existsSync(path)) {
@@ -25,28 +26,31 @@ const createDirectories = () => {
     createDirectory(PACKAGE_DIR);
 }
 
-const createPackageMetadata = (downloadedFiles: DownloadedFile[], packageName: string): PackageMetadata => {
-    return {
-        title: packageName,
-        files: downloadedFiles,
-    };
-}
-
 const deleteData = (downloadedFiles: DownloadedFile[]) => {
     downloadedFiles.forEach(({ fileName }) => {
         fs.unlinkSync(`${DOWNLOAD_DIR}/${fileName}`);
     });
 }
 
-const packageData = async (packageName: string, fetcher: TileFetcher, packager: ZipPackager) => {
+const packageData = async (
+    packageCreationParams: PackageBaseInfo,
+    fetcher: TileFetcher,
+    packager: ZipPackager
+) => {
     const downloadedFiles = await fetcher.fetch();
     
     console.log('Downloaded Files', downloadedFiles, downloadedFiles.length);
-    const metadata = createPackageMetadata(downloadedFiles, packageName);
-    const packagePath = `${PACKAGE_DIR}/${packageName}.zip`;
+    
+    const description = createPackageDetails(packageCreationParams, downloadedFiles)
+    const metadata = createPackageMetadata(description, downloadedFiles);
+
+    const { title } = packageCreationParams;
+    const packagePath = `${PACKAGE_DIR}/${title}.zip`;
     await packager.package(metadata, packagePath);
 
     console.log(`Package done! path: ${packagePath}`);
+
+    savePackageDescription(description);
 
     deleteData(downloadedFiles);
 }
@@ -141,8 +145,9 @@ const main = async (options: MapTilePackageGenerationOptions) => {
     const fetcher = TileFetcherFactory.create(fetchArgs);
     const packager = new ZipPackager();
     
-    const { title } = options;
-    await packageData(title, fetcher, packager);
+    const { title, expiration } = options;
+    const baseInfo: PackageBaseInfo = { title, expiration }
+    await packageData(baseInfo, fetcher, packager);
 }
 
 createDirectories();
@@ -166,6 +171,7 @@ const multipolygon = roads.features[0].geometry as MultiPolygon;
 
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
     title: 'test-package-2',
+    expiration: new Date('2024-09-06'),
     type: 'xyz',
     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
     projection: 'EPSG:3857',
@@ -174,7 +180,7 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
         type: 'multipolygon',
         multipolygon,
         startZ: 1,
-        endZ: 17,
+        endZ: 14,
         preprocessArgs: {
             simplify: {
                 tolerance: 0.002,
