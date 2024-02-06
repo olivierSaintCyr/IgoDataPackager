@@ -5,21 +5,60 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "tsc && babel src -d dist --extensions '.ts' && node dist/index.js",
+    "start": "rimraf dist && tsc && babel src -d dist --extensions '.ts' --ignore '**/*.spec.ts' && node dist/index.js",
+    "test": "rimraf dist && cross-env TS_NODE_PROJECT='./tsconfig.spec.json' tsc && cross-env NODE_ENV=test babel src -d dist/ --extensions '.ts' --source-maps inline && mocha dist/**/*.spec.js",
+    "coverage": "nyc npm test"
+  },
+  "nyc": {
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "check-coverage": true,
+    "include": [
+      "src/**/*.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.spec.ts",
+      "src/index.ts"
+    ],
+    "reporter": [
+      "html",
+      "text",
+      "cobertura"
+    ],
+    "all": true,
+    "cache": true,
+    "sourceMap": true,
+    "instrument": true
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/cli": "^7.23.4",
+    "@babel/cli": "^7.23.9",
     "@babel/core": "^7.23.7",
     "@babel/preset-env": "^7.23.8",
     "@babel/preset-typescript": "^7.23.3",
+    "@babel/register": "^7.23.7",
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
     "@types/proj4": "^2.5.5",
     "@types/rbush": "^3.0.3",
+    "@types/sinon": "^17.0.3",
     "babel-plugin-add-import-extension": "^1.6.0",
+    "babel-plugin-istanbul": "^6.1.1",
+    "chai": "^5.0.3",
+    "cross-env": "^7.0.3",
+    "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
+    "rimraf": "^5.0.5",
+    "sinon": "^17.0.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@babel/runtime": "^7.23.9",
     "@supercharge/promise-pool": "^3.1.0",
     "@turf/boolean-intersects": "^6.5.0",
     "@turf/boolean-point-in-polygon": "^6.5.0",

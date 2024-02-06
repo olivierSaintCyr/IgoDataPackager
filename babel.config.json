@@ -1,4 +1,11 @@
 {
+    "env":{
+        "test": {
+            "plugins": [
+                "istanbul"
+            ]
+        }
+    },
     "presets": [
         ["@babel/preset-typescript"],
         ["@babel/preset-env", { "modules": false, "targets": { "node": true } }]

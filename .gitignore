@@ -3,3 +3,5 @@ dist
 data
 tile-packages.json
 *.geojson
+coverage
+.nyc_output

@@ -1,5 +1,11 @@
 {
     "compilerOptions": {
+        // Ensure that .d.ts files are created by tsc, but not .js files
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        // Ensure that Babel can safely transpile files in the TypeScript project
+        "isolatedModules": true,
+        "types": ["@types/mocha", "mocha"],
         "module": "ESNext",
         "esModuleInterop": true,
         "target": "ES2022",
@@ -7,8 +13,11 @@
         "sourceMap": true,
         "strict": true,
         "outDir": "dist",
-        "rootDir": "./src/"
-      },
+        "rootDir": "./src",
+    },
+    "include": [
+      "src/**/*"
+    ],
     "ts-node": {
       "esm": true, // «———— enabling ESM for ts-node
     },
