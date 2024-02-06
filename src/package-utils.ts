@@ -4,17 +4,17 @@ import { AvailablePackages, PackageBaseInfo, PackageDetails, PackageMetadata } f
 import { readFileSync, writeFileSync, statSync, existsSync } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
-const loadAvailablePackageDetails = (): AvailablePackages => {
+const loadAvailablePackageDetails = (path: string): AvailablePackages => {
     if (!existsSync(AVAILABLE_PACKAGES_FILE)) {
         return []
     }
 
-    const data = readFileSync(AVAILABLE_PACKAGES_FILE).toString();
+    const data = readFileSync(path).toString();
     return JSON.parse(data);
 }
 
-export const savePackageDescription = (description: PackageDetails) => {
-    const existingPackages = loadAvailablePackageDetails();
+export const savePackageDescription = (description: PackageDetails, path=AVAILABLE_PACKAGES_FILE) => {
+    const existingPackages = loadAvailablePackageDetails(path);
     existingPackages.push(description);
 
     writeFileSync(AVAILABLE_PACKAGES_FILE, JSON.stringify(existingPackages, null, 4));

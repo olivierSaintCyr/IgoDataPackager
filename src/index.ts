@@ -170,7 +170,7 @@ const roads = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitu
 const multipolygon = roads.features[0].geometry as MultiPolygon;
 
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
-    title: 'test-package-2',
+    title: 'mtl-roads-v1',
     expiration: new Date('2024-09-06'),
     type: 'xyz',
     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
@@ -180,7 +180,7 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
         type: 'multipolygon',
         multipolygon,
         startZ: 1,
-        endZ: 14,
+        endZ: 17,
         preprocessArgs: {
             simplify: {
                 tolerance: 0.002,
