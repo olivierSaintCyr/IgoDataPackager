@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "babel src -d dist --extensions '.ts' && node dist/index.js"
+    "start": "tsc && babel src -d dist --extensions '.ts' && node dist/index.js",
   },
   "author": "",
   "license": "ISC",
