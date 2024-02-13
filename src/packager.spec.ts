@@ -76,6 +76,7 @@ describe('ZipPackager', () => {
         metadata = {
             id: '123',
             title: 'test_package',
+            url: 'http://test.com/',
             expiration: new Date('2024-02-06'),
             files: generatedFiles.map(({ name: fileName, url }) => {
                 return { fileName, url };

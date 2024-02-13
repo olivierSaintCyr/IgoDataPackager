@@ -146,7 +146,7 @@ const main = async (options: MapTilePackageGenerationOptions) => {
     const packager = new ZipPackager();
     
     const { title, expiration } = options;
-    const baseInfo: PackageBaseInfo = { title, expiration }
+    const baseInfo: PackageBaseInfo = { title, expiration, url }
     await packageData(baseInfo, fetcher, packager);
 }
 
@@ -169,8 +169,33 @@ createDirectories();
 const roads = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL_reseau_routier.geojson`);
 const multipolygon = roads.features[0].geometry as MultiPolygon;
 
+// const packageGenerationOptions: MapTilePackageGenerationOptions = {
+//     title: 'mtl-roads-v1',
+//     expiration: new Date('2024-09-06'),
+//     type: 'xyz',
+//     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
+//     projection: 'EPSG:3857',
+//     maxZoom: 17,
+//     args: {
+//         type: 'multipolygon',
+//         multipolygon,
+//         startZ: 1,
+//         endZ: 17,
+//         preprocessArgs: {
+//             simplify: {
+//                 tolerance: 0.002,
+//                 highQuality: false,
+//             },
+//             buffer: {
+//                 radius: 500,
+//                 units: 'meters',
+//             }
+//         },
+//     },
+// };
+
 const packageGenerationOptions: MapTilePackageGenerationOptions = {
-    title: 'mtl-roads-v1',
+    title: 'mtl-roads-v1-small',
     expiration: new Date('2024-09-06'),
     type: 'xyz',
     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
@@ -180,7 +205,7 @@ const packageGenerationOptions: MapTilePackageGenerationOptions = {
         type: 'multipolygon',
         multipolygon,
         startZ: 1,
-        endZ: 17,
+        endZ: 14,
         preprocessArgs: {
             simplify: {
                 tolerance: 0.002,

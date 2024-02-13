@@ -5,13 +5,12 @@ export type FileMetaData = DownloadedFile
 export interface PackageBaseInfo {
     title: string;
     expiration: Date;
+    url: string;
 }
 
 export interface PackageDetails extends PackageBaseInfo {
     id: string;
-    title: string;
     size: number;
-    expiration: Date;
 }
 
 export interface PackageMetadata extends PackageDetails {
