@@ -143,6 +143,19 @@ export const getNeighboringTiles = (tile: Tile, tileGrid: TileGrid): Tile[] => {
             tiles.push(neighboor);
         } 
     }
+
+    for (const i of deltas) {
+        for (const j of deltas) {
+            const neighboor = {
+                x: startX + i,
+                y: startY + j,
+                z
+            }
+            if (isTileInsideTileGrid(neighboor, tileGrid)) {
+                tiles.push(neighboor);
+            } 
+        }
+    }
     return tiles;
 }
 
