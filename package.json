@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "rimraf dist && tsc && babel src -d dist --extensions '.ts' --ignore '**/*.spec.ts' && node dist/index.js",
+    "start": "rimraf dist && tsc && babel src -d dist --extensions .ts --ignore **/*.spec.ts && node dist/index.js",
     "test": "rimraf dist && cross-env TS_NODE_PROJECT='./tsconfig.spec.json' tsc && cross-env NODE_ENV=test babel src -d dist/ --extensions '.ts' --source-maps inline && mocha dist/**/*.spec.js",
     "coverage": "nyc npm test"
   },
