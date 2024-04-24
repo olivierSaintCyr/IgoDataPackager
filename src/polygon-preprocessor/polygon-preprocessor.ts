@@ -13,30 +13,44 @@ export class PolygonPreprocessor {
         }
         return this.args.buffer;
     }
-    process(polygon: Polygon | MultiPolygon): Polygon | MultiPolygon {
 
+    private bufferizePolygon(polygon: Polygon | MultiPolygon) {
+        if (!this.args.buffer) {
+            return polygon;
+        }
 
-        var date = new Date();
+        const { radius, units, steps } = this.args.buffer;
+        const buffered = buffer(polygon, radius, { units, steps });
+        return buffered.geometry;
+    }
 
+    private simplifyPolygon(polygon: Polygon | MultiPolygon) {
+        return this.args.simplify ? simplify(polygon, this.args.simplify) : polygon
+    }
+
+    private getPolygonFileName() {
+        const date = new Date();
         const dateStr = date.getFullYear().toString() + date.getMonth() + 1 + date.getDate() + date.getHours() + date.getMinutes() + date.getSeconds();
-        // TODO CHECK LA LOGIQUE DES IF pour return la bonne geom
-        let geometryToProcess = polygon;
+        if (this.args.buffer && this.args.simplify) {
+            return `${dateStr}_buff_simpl.geojson`;
+        }
+
         if (this.args.buffer) {
-            const { radius, units, steps } = this.getBufferOptions();
-            const buffered = buffer(polygon, radius, { units, steps });
-            geometryToProcess = buffered.geometry;
+            return `${dateStr}_buff.geojson`;
         }
 
-        if (!this.args.simplify) {
-            fs.writeFileSync(dateStr + '_buff.geojson', JSON.stringify(geometryToProcess));
-            return geometryToProcess;
-
+        if (this.args.simplify) {
+            return `${dateStr}_simpl.geojson`;
         }
+        return `${dateStr}_none.geojson`;
+    }
 
-        const simplified = simplify(geometryToProcess, this.args.simplify);
-        fs.writeFileSync(dateStr + '_buff_simpl.geojson', JSON.stringify(simplified));
+    process(polygon: Polygon | MultiPolygon): Polygon | MultiPolygon {
+        const buffered = this.bufferizePolygon(polygon);
+        const simplified = this.simplifyPolygon(buffered);
 
-
+        fs.writeFileSync(this.getPolygonFileName(), JSON.stringify(simplified));
+        
         return simplified;
     }
 }
