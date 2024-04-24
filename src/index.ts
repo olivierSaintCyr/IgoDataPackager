@@ -38,9 +38,9 @@ const packageData = async (
     packager: ZipPackager
 ) => {
     const downloadedFiles = await fetcher.fetch();
-    
+
     console.log('Downloaded Files', downloadedFiles, downloadedFiles.length);
-    
+
     const description = createPackageDetails(packageCreationParams, downloadedFiles)
     const metadata = createPackageMetadata(description, downloadedFiles);
 
@@ -114,7 +114,7 @@ const mergeMultiPolygonToFeatureCollectionInPlace = (collection: FeatureCollecti
     if (features.length != multiCoordinates.length) {
         throw Error('Feature collection has not the same ammount of polygons as multipolygon');
     }
-    
+
     for (let i = 0; i < collection.features.length; i++) {
         const feature = features[i];
         const coordinates = multiCoordinates[i];
@@ -133,7 +133,7 @@ const main = async (options: MapTilePackageGenerationOptions) => {
 
     const source = await DataSourceFactory.create(tileSourceOptions);
 
-    const { url,  args } = options;
+    const { url, args } = options;
     const fetchArgs = createFullDepthGenerationArgs(
         url,
         source,
@@ -144,7 +144,7 @@ const main = async (options: MapTilePackageGenerationOptions) => {
 
     const fetcher = TileFetcherFactory.create(fetchArgs);
     const packager = new ZipPackager();
-    
+
     const { title, expiration } = options;
     const baseInfo: PackageBaseInfo = { title, expiration, url }
     await packageData(baseInfo, fetcher, packager);
@@ -166,59 +166,40 @@ createDirectories();
 //     }
 // };
 
-const roads = loadGeoJson(`${DATA_DIR}/polygons/CentreDeServicesLatitude_Longitude_MTL_reseau_routier.geojson`);
-const multipolygon = roads.features[0].geometry as MultiPolygon;
+const roads = loadGeoJson(`${DATA_DIR}/polygons/rtss_par_dgt_buff_10m.geojson`);
 
-// const packageGenerationOptions: MapTilePackageGenerationOptions = {
-//     title: 'mtl-roads-v1',
-//     expiration: new Date('2024-09-06'),
-//     type: 'xyz',
-//     url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
-//     projection: 'EPSG:3857',
-//     maxZoom: 17,
-//     args: {
-//         type: 'multipolygon',
-//         multipolygon,
-//         startZ: 1,
-//         endZ: 17,
-//         preprocessArgs: {
-//             simplify: {
-//                 tolerance: 0.002,
-//                 highQuality: false,
-//             },
-//             buffer: {
-//                 radius: 500,
-//                 units: 'meters',
-//             }
-//         },
-//     },
-// };
+roads.features.filter(r => r.properties!.is_in_or_managed_by === '53660000').forEach((feature, i) => {
 
-const packageGenerationOptions: MapTilePackageGenerationOptions = {
-    title: 'mtl-roads-v1-small',
-    expiration: new Date('2024-09-06'),
-    type: 'xyz',
-    url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
-    projection: 'EPSG:3857',
-    maxZoom: 17,
-    args: {
-        type: 'multipolygon',
-        multipolygon,
-        startZ: 1,
-        endZ: 14,
-        preprocessArgs: {
-            simplify: {
-                tolerance: 0.002,
-                highQuality: false,
+    const multipolygon = feature.geometry as MultiPolygon;
+    const title = feature?.properties!['is_in_or_managed_by'] ?? `${i}`;
+    //console.log(title)
+    const packageGenerationOptions: MapTilePackageGenerationOptions = {
+        title,
+        expiration: new Date('2024-09-06'),
+        type: 'xyz',
+        url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
+        projection: 'EPSG:3857',
+        maxZoom: 17,
+        args: {
+            type: 'multipolygon',
+            multipolygon,
+            startZ: 1,
+            endZ: 17,
+            preprocessArgs: {
+                simplify: {
+                    tolerance: 0.0002,
+                    highQuality: true,
+                }/*,
+                    buffer: {
+                        radius: 60,
+    
+                        units: 'meters',
+                    }*/
             },
-            buffer: {
-                radius: 500,
-                units: 'meters',
-            }
         },
-    },
-};
+    };
 
-saveGeoJson(multipolygon, 'multipolygon.geojson');
+    saveGeoJson(multipolygon, title + '_multipolygon.geojson');
 
-main(packageGenerationOptions);
+    main(packageGenerationOptions);
+})

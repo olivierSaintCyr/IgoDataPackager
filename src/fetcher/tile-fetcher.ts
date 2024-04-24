@@ -62,10 +62,10 @@ export abstract class TileFetcher {
             const res = await axios.get(url, {
                 responseType: 'stream'
             });
-    
+
             const fileName = this.getFileName(url);
             const path = this.getFilePath(fileName);
-            
+
             const writer = res.data.pipe(createWriteStream(path));
             await finished(writer);
             return {
@@ -76,8 +76,8 @@ export abstract class TileFetcher {
             if (!(e instanceof AxiosError)) {
                 throw e;
             }
-            if (e.response?.status == 503) {
-                console.error(`Tile fetch with url: ${url} have status led to 503`);
+            if (e.response?.status !== 200) {
+                console.error(`Tile fetch with url: ${url} have status led to ${e.response?.status}`);
             }
             return undefined;
         }
@@ -91,7 +91,7 @@ export abstract class TileFetcher {
             .process(async (url, index, pool) => {
                 const downloaded = await this.downloadData(url);
                 if (index % 50 == 0) {
-                    console.log(`Download ${index/urls.length}% done`)
+                    console.log(`Download ${index / urls.length}% done`)
                 }
                 return downloaded;
             });
