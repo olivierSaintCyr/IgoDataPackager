@@ -3,6 +3,7 @@ import { PolygonPreprocessingArgs } from './polygon-preprocessor-args.interface'
 import simplify from '@turf/simplify';
 import buffer from '@turf/buffer';
 import fs from 'fs';
+import { TEMP_DIR } from '../constants';
 
 export class PolygonPreprocessor {
     constructor(private args: PolygonPreprocessingArgs) { }
@@ -49,8 +50,7 @@ export class PolygonPreprocessor {
         const buffered = this.bufferizePolygon(polygon);
         const simplified = this.simplifyPolygon(buffered);
 
-        fs.writeFileSync(this.getPolygonFileName(), JSON.stringify(simplified));
-        
+        fs.writeFileSync(TEMP_DIR + '/' + this.getPolygonFileName(), JSON.stringify(simplified));
         return simplified;
     }
 }

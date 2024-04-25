@@ -1,4 +1,4 @@
-import { DATA_DIR, DOWNLOAD_DIR, PACKAGE_DIR } from './constants';
+import { DATA_DIR, DOWNLOAD_DIR, PACKAGE_DIR, TEMP_DIR } from './constants';
 import { TileFetcher } from './fetcher/tile-fetcher';
 import { FetchArgs, GenerationArgs } from './fetcher/tile-fetcher-args.interface';
 import fs from 'fs';
@@ -24,6 +24,7 @@ const createDirectories = () => {
     createDirectory(DATA_DIR);
     createDirectory(DOWNLOAD_DIR);
     createDirectory(PACKAGE_DIR);
+    createDirectory(TEMP_DIR);
 }
 
 const deleteData = (downloadedFiles: DownloadedFile[]) => {
@@ -166,40 +167,43 @@ createDirectories();
 //     }
 // };
 
-const roads = loadGeoJson(`${DATA_DIR}/polygons/rtss_par_dgt_buff_10m.geojson`);
+const roads = loadGeoJson(`${DATA_DIR}/polygons/rtss_par_dgt_buff_60m.geojson`);
 
-roads.features.filter(r => r.properties!.is_in_or_managed_by === '53660000').forEach((feature, i) => {
+roads.features
+    .filter(f =>
+        f.properties!.title === 'Eeyou Istchee Baie-James' ||
+        f.properties!.title === 'Aéroportuaire')
+    .forEach((feature, i) => {
 
-    const multipolygon = feature.geometry as MultiPolygon;
-    const title = feature?.properties!['is_in_or_managed_by'] ?? `${i}`;
-    //console.log(title)
-    const packageGenerationOptions: MapTilePackageGenerationOptions = {
-        title,
-        expiration: new Date('2024-09-06'),
-        type: 'xyz',
-        url: 'https://geoegl.msp.gouv.qc.ca/apis/carto/tms/1.0.0/carte_gouv_qc_ro@EPSG_3857/{z}/{x}/{-y}.png',
-        projection: 'EPSG:3857',
-        maxZoom: 17,
-        args: {
-            type: 'multipolygon',
-            multipolygon,
-            startZ: 1,
-            endZ: 17,
-            preprocessArgs: {
-                simplify: {
-                    tolerance: 0.0002,
-                    highQuality: true,
-                }/*,
-                    buffer: {
-                        radius: 60,
-    
-                        units: 'meters',
-                    }*/
+        const multipolygon = feature.geometry as MultiPolygon;
+        const title = feature?.properties!['title'] ?? `${i}`;
+        const packageGenerationOptions: MapTilePackageGenerationOptions = {
+            title,
+            expiration: new Date('2024-09-06'),
+            type: 'xyz',
+            url: 'https://carto.msp.gouv.qc.ca/tms/1.0.0/carte_gouv_qc@EPSG_3857/{z}/{x}/{-y}.png',
+            projection: 'EPSG:3857',
+            maxZoom: 17,
+            args: {
+                type: 'multipolygon',
+                multipolygon,
+                startZ: 1,
+                endZ: 17,
+                preprocessArgs: {
+                    simplify: {
+                        tolerance: 0.0002,
+                        highQuality: true,
+                    }/*,
+                     buffer: {
+                         radius: 60,
+     
+                         units: 'meters',
+                     }*/
+                },
             },
-        },
-    };
+        };
 
-    saveGeoJson(multipolygon, title + '_multipolygon.geojson');
+        saveGeoJson(multipolygon, `${TEMP_DIR}/multipolygon_${title}.geojson`);
 
-    main(packageGenerationOptions);
-})
+        main(packageGenerationOptions);
+    })
