@@ -167,12 +167,9 @@ createDirectories();
 //     }
 // };
 
-const roads = loadGeoJson(`${DATA_DIR}/polygons/rtss_par_dgt_buff_60m.geojson`);
+const loadedGeojson = loadGeoJson(`${DATA_DIR}/polygons/rtss_par_dgt_buff_60m.geojson`);
 
-roads.features
-    .filter(f =>
-        f.properties!.title === 'Eeyou Istchee Baie-James' ||
-        f.properties!.title === 'Aéroportuaire')
+loadedGeojson.features
     .forEach((feature, i) => {
 
         const multipolygon = feature.geometry as MultiPolygon;

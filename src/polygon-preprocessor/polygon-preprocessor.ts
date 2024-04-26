@@ -1,7 +1,6 @@
 import { MultiPolygon, Polygon } from 'geojson';
 import { PolygonPreprocessingArgs } from './polygon-preprocessor-args.interface';
-import simplify from '@turf/simplify';
-import buffer from '@turf/buffer';
+import { simplify, buffer } from '@turf/turf';
 import fs from 'fs';
 import { TEMP_DIR } from '../constants';
 

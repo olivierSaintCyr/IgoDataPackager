@@ -1,4 +1,4 @@
-import { Units } from '@turf/helpers';
+import { Units } from '@turf/turf';
 
 export interface PolygonPreprocessingArgs {
     simplify?: {
@@ -7,7 +7,7 @@ export interface PolygonPreprocessingArgs {
         mutable?: boolean;
     };
     buffer?: {
-        radius? : number;
+        radius?: number;
         units?: Units;
         steps?: number;
     };
