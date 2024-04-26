@@ -4,12 +4,10 @@ import { fromExtent } from 'ol/geom/Polygon.js';
 import { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson';
 import { transformExtent } from 'ol/proj.js';
 import { GEOJSON_PROJECTION } from '../constants';
-import centroid from '@turf/centroid';
 import { TileCoord } from 'ol/tilecoord';
 import proj4 from 'proj4';
 import booleanIntersects from '@turf/boolean-intersects';
-import { BBox, bbox, bboxPolygon } from '@turf/turf';
-import { intersect } from '@turf/turf';
+import { BBox, bbox, bboxPolygon, intersect, pointOnFeature } from '@turf/turf';
 import RBush from 'rbush';
 import { GeometryBbox } from './geometry-bbox.interface';
 
@@ -209,10 +207,9 @@ const getAllTileInPolygonAtLevel = (
     }
     return tiles;
 }
-    
-const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean)  => {
-    const center = centroid(polygon).geometry.coordinates;
-    
+
+const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean) => {
+    const center = pointOnFeature(polygon).geometry.coordinates;
     const tiles = []
     for (let z = startZ; z <= endZ; z++) {
         const tilesAtLevel = getAllTileInPolygonAtLevel(
