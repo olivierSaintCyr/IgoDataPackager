@@ -4,12 +4,10 @@ import { fromExtent } from 'ol/geom/Polygon.js';
 import { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson';
 import { transformExtent } from 'ol/proj.js';
 import { GEOJSON_PROJECTION } from '../constants';
-import centroid from '@turf/centroid';
 import { TileCoord } from 'ol/tilecoord';
 import proj4 from 'proj4';
 import booleanIntersects from '@turf/boolean-intersects';
-import { BBox, bbox, bboxPolygon } from '@turf/turf';
-import { intersect } from '@turf/turf';
+import { BBox, bbox, bboxPolygon, intersect, pointOnFeature } from '@turf/turf';
 import RBush from 'rbush';
 import { GeometryBbox } from './geometry-bbox.interface';
 
@@ -20,7 +18,7 @@ export const zoom = (tile: Tile): Tile[] => {
     const tiles: Tile[] = [];
     for (let i = 0; i < 2; i++) {
         for (let j = 0; j < 2; j++) {
-            tiles.push({ x: x0 + i, y: y0 + j, z: z});
+            tiles.push({ x: x0 + i, y: y0 + j, z: z });
         }
     }
     return tiles;
@@ -39,7 +37,7 @@ export function deZoom(tile: Tile): Tile | undefined {
 }
 
 export const isTileInsideTileGrid = (tile: Tile, tileGrid: TileGrid): boolean => {
-    const extent = tileGrid.getTileCoordExtent([ tile.z, tile.x, tile.y]);
+    const extent = tileGrid.getTileCoordExtent([tile.z, tile.x, tile.y]);
     return !extent.includes(NaN);
 }
 
@@ -55,9 +53,9 @@ export const getAllChildTiles = (root: Tile, maxLevel: number, tileGrid: TileGri
             tiles.push(current);
             return;
         }
-        
+
         tiles.push(current);
-        
+
         const children = zoom(current);
         children.forEach((child) => {
             recursion(child);
@@ -71,7 +69,7 @@ export const getAllChildTiles = (root: Tile, maxLevel: number, tileGrid: TileGri
 export const getTilePolygon = (tile: Tile, tileGrid: TileGrid, tileProj: string): Polygon => {
     const extent = tileGrid.getTileCoordExtent([tile.z, tile.x, tile.y]);
     const transformedExtent = transformExtent(extent, tileProj, GEOJSON_PROJECTION);
-    
+
     const polygon = fromExtent(transformedExtent);
     const coordinates = polygon.getCoordinates();
     return {
@@ -88,7 +86,7 @@ export const isTileInPolygon = (tile: Tile, polygon: Polygon, tileGrid: TileGrid
 
 export const isTileInMultiPolygon = (tile: Tile, multipolygon: MultiPolygon, tileGrid: TileGrid, tileProj: string): boolean => {
     const tilePolygon = getTilePolygon(tile, tileGrid, tileProj);
-    
+
     for (const coordinates of multipolygon.coordinates) {
         const polygon: Polygon = {
             type: "Polygon",
@@ -104,8 +102,8 @@ export const isTileInMultiPolygon = (tile: Tile, multipolygon: MultiPolygon, til
 
 export const isTileInComplexPolygon = (tile: Tile, tileGrid: TileGrid, tileProj: string, subPolygonIndex: RBush<GeometryBbox>) => {
     const tilePolygon = getTilePolygon(tile, tileGrid, tileProj);
-    const [ minX, minY, maxX, maxY ] = bbox(tilePolygon);
-    
+    const [minX, minY, maxX, maxY] = bbox(tilePolygon);
+
     const possibles = subPolygonIndex.search({ minX, minY, maxX, maxY });
     for (const { geometry } of possibles) {
         if (booleanIntersects(tilePolygon, geometry)) {
@@ -141,7 +139,7 @@ export const getNeighboringTiles = (tile: Tile, tileGrid: TileGrid): Tile[] => {
 
         if (isTileInsideTileGrid(neighboor, tileGrid)) {
             tiles.push(neighboor);
-        } 
+        }
     }
 
     for (const i of deltas) {
@@ -153,7 +151,7 @@ export const getNeighboringTiles = (tile: Tile, tileGrid: TileGrid): Tile[] => {
             }
             if (isTileInsideTileGrid(neighboor, tileGrid)) {
                 tiles.push(neighboor);
-            } 
+            }
         }
     }
     return tiles;
@@ -178,9 +176,9 @@ const getAllTileInPolygonAtLevel = (
     const getTileXY = ({ x, y }: Tile) => `${x},${y}`;
 
     const centerProj = proj4(GEOJSON_PROJECTION, tileProj, center)
-    
+
     console.log(`Starting get all tile at level: ${z}`);
-    
+
     const centerTileCoord = tileGrid.getTileCoordForCoordAndZ([centerProj[0], centerProj[1]], z);
     const centerTile = tileCoordToTile(centerTileCoord);
 
@@ -203,16 +201,15 @@ const getAllTileInPolygonAtLevel = (
         }
 
         tiles.push(current);
-        
+
         const neighbors = getNeighboringTiles(current, tileGrid);
         toVisit.push(...neighbors);
     }
     return tiles;
 }
-    
-const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean)  => {
-    const center = centroid(polygon).geometry.coordinates;
-    
+
+const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string, isTileInPolygonCallback: (tile: Tile, tileGrid: TileGrid, tileProj: string) => boolean) => {
+    const center = pointOnFeature(polygon).geometry.coordinates;
     const tiles = []
     for (let z = startZ; z <= endZ; z++) {
         const tilesAtLevel = getAllTileInPolygonAtLevel(
@@ -226,7 +223,7 @@ const getAllTilesInPolygonInternal = (polygon: Polygon, startZ: number, endZ: nu
         // can't use tiles.push(...tilesAtLevel); => lead to maximum call stack error.
         for (const tile of tilesAtLevel) {
             tiles.push(tile);
-        } 
+        }
     }
     return tiles;
 }
@@ -237,7 +234,7 @@ const getAllTilesInMultiPolygonInternal = (multiPolygon: MultiPolygon, startZ: n
         const getTileXYZ = ({ x, y, z }: Tile) => {
             return `${x},${y},${z}`;
         };
-        
+
         const xyzs = new Set<string>(tiles.map(getTileXYZ));
 
         return [...xyzs.values()].map(xyz => {
@@ -251,13 +248,13 @@ const getAllTilesInMultiPolygonInternal = (multiPolygon: MultiPolygon, startZ: n
     }
 
     const polygons: Polygon[] = multiPolygon.coordinates
-        .map(coordinates => { 
-            return { 
+        .map(coordinates => {
+            return {
                 type: 'Polygon',
                 coordinates,
             };
         });
-    
+
     const tiles: Tile[] = polygons.flatMap((polygon) => {
         console.log(`Getting tile in new polygon`);
         return getAllTilesInPolygonInternal(
@@ -273,7 +270,7 @@ const getAllTilesInMultiPolygonInternal = (multiPolygon: MultiPolygon, startZ: n
     return removeDuplicateTiles(tiles);
 }
 
-export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string)  => {
+export const getAllTilesInPolygon = (polygon: Polygon, startZ: number, endZ: number, tileGrid: TileGrid, tileProj: string) => {
     return getAllTilesInPolygonInternal(
         polygon,
         startZ,
@@ -323,9 +320,9 @@ export const splitPolygon = (polygon: Polygon, avgPointsPerSplit: number): Featu
 
         const totalPoints = polygon.coordinates.map(coords => coords.length).reduce((a, b) => a + b);
         const bboxSplit = Math.ceil(Math.sqrt(totalPoints / avgPointsPerSplit));
-        
-        const delta = { x: (xmax - xmin)/bboxSplit, y: (ymax - ymin)/bboxSplit };
-        
+
+        const delta = { x: (xmax - xmin) / bboxSplit, y: (ymax - ymin) / bboxSplit };
+
         for (let x = xmin; x <= xmax; x += delta.x) {
             for (let y = ymin; y <= ymax; y += delta.y) {
                 const cXmin = x;
